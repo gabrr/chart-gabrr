@@ -1,27 +1,49 @@
 // libraries
 import React, { useEffect } from 'react'
 import styled, { keyframes } from 'styled-components'
+import { COLORS } from '../../../utils/theme/colors'
 
 // functions and default values
-import { fadeIn, fadeOut, getDataParsed, getTopValue, getXIndicator, toggleAnimation } from './tools'
+import { 
+    fadeIn,
+    fadeOut,
+    getDataParsed,
+    getTopValue,
+    getXIndicator,
+    toggleAnimation,
+    showToolTip,
+    showToolTipIcon,
+    hideToolTip,
+    hideToolTipIcon
+} from './tools'
 
 
-export const BlackChart = ({ data, title, loading }) => {
+export const BlackChart = ({ data, title, loading, color, className = '', tooltip = 'Sem Descrição' }) => {
 
     const topNumber = getTopValue(data)
-    const xIndicators = getXIndicator(topNumber, '')
-    const chartData = getDataParsed(data, topNumber)
-
+    const xIndicators = getXIndicator(topNumber, '', 2)
+    const chartData = getDataParsed(data, topNumber, title)
 
     useEffect(() => {
         toggleAnimation(loading)
     }, [loading])
-    
-
 
     return (
-        <Div className="chart" >
+        <Div
+            className={`chart hoverable ${className}`}
+            color={color}
+            onMouseEnter={showToolTipIcon}
+            onMouseLeave={hideToolTipIcon}
+        >
             <p className="chart_title"> {title} </p>
+            <div
+                className="chart_tip"
+                onClick={showToolTip}
+                onMouseLeave={hideToolTip}
+            >
+                <p className="tip_sign">?</p>
+                <p className="tooltip_text"> {tooltip} </p>
+            </div>
             <div className="container">
                 <div className="loader active">
                     <div className="dots"></div>
@@ -42,6 +64,8 @@ export const BlackChart = ({ data, title, loading }) => {
                 <div className="bar_series">
                     {chartData.map(bar => (
                         <ChartBar
+                            color={color}
+                            loading={loading}
                             key={bar.x}
                             value={`${bar.percentage}`}
                             onMouseEnter={fadeIn}
@@ -76,6 +100,43 @@ const motion = keyframes`
 `;
 
 const Div = styled.div`
+    position: relative;
+
+    .chart_tip {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        height: 16px;
+        display: inline-grid;
+        text-align: center;
+        width: 16px;
+        opacity: 0;
+        font-size: 10px;
+        transition: opacity 300ms ease;
+        border-radius: 50px;
+        cursor: pointer;
+    }
+    .tip_sign {
+        pointer-events: none;
+    }
+
+    .tooltip_text {
+        position: absolute;
+        top: 25px;
+        right: 0;
+        opacity: 0;
+        box-shadow: 0 0 10px 0px rgba(0, 0, 0, 0.1);
+        background-color: ${COLORS.white};
+        border-radius: 7px;
+        padding: 4px 8px;
+        width: 20vw;
+        z-index: 5; 
+    }
+    .show {
+        opacity: 1;
+    }
+
+
     .chart_title {
         margin: 0 0 30px -30px;
     }
@@ -94,7 +155,7 @@ const Div = styled.div`
     }
 
     .gray_bg {
-        background-color: #d8d8d8;
+        background-color: #efefef;
     }
 
     .bar_series {
@@ -122,7 +183,7 @@ const Div = styled.div`
     .y_label {
         position: absolute;
         top: 50%;
-        left: -25px;
+        left: -32px;
         transform: translateY(-50%);
         font-size: 10px;
     }
@@ -131,7 +192,6 @@ const Div = styled.div`
         left: 0;
         height: 100%;
         width: 100%;
-        background-color: #F0f0f0;
         z-index: 3;
         display: flex;
         flex-direction: row;
@@ -144,12 +204,13 @@ const Div = styled.div`
 
     .loader.active {
         opacity: 1 !important;
+        animation: none;
     }
 
     .dots {
         width: 10px;
         height: 10px;
-        background-color: blue;
+        background-color: ${({ color }) => color};
         margin: 0 3px;
         border-radius: 50px;
         animation: ${motion} 500ms linear infinite alternate;
@@ -170,15 +231,17 @@ const Div = styled.div`
 const ChartBar = styled.div`
     height: ${({ value }) => value + '%'};
     width: 100%;
-    background-color: rgb(2, 65, 182);
+    background-color: ${({ color }) => color };
+    opacity: ${({ loading }) => loading ? '0.6' : '1'} ;
     margin: 0 5px;
     border-radius: 3px 3px 0 0;
     position: relative;
-    transition: all 400ms ease;
+    transition: all 500ms cubic-bezier(0, 0, 0.2, 1);
 
     .tooltip {
         position: absolute;
-        background-color: rgb(2, 65, 182);
+        background-color: ${({ color }) => color };
+        width: max-content;
         color: #fff;
         padding: 3px 5px;
         border-radius: 3px;
